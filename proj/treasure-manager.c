@@ -31,6 +31,29 @@ typedef struct Hunt{
 
 #define TREASURE_PATH_LEN 256
 
+void log_action(const char *hunt_id, const char *action) {
+    char log_path[TREASURE_PATH_LEN];
+    struct stat st = {0};
+
+    snprintf(log_path, sizeof(log_path), "hunt/%s/treasures.log", hunt_id);
+    int fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd >= 0) {
+        time_t now = time(NULL);
+        dprintf(fd, "[%s] %s\n", strtok(ctime(&now), "\n"), action);
+        close(fd);
+
+       
+        if (stat("log", &st) == -1) {
+            mkdir("log", 0700);
+        }
+        
+        char symlink_path[TREASURE_PATH_LEN];
+        snprintf(symlink_path, sizeof(symlink_path), "log/logged_hunt-%s", hunt_id);
+        unlink(symlink_path);
+        symlink(log_path, symlink_path);
+    }
+}
+
 void add_hunt(const char *hunt_id) {
     char path[TREASURE_PATH_LEN];
     snprintf(path, sizeof(path), "hunt/%s", hunt_id);
@@ -52,8 +75,9 @@ void add_hunt(const char *hunt_id) {
     if (fd1 >= 0) close(fd1);
     int fd2 = open(log_path, O_CREAT | O_APPEND, 0644);
     if (fd2 >= 0) close(fd2);
-}
 
+    log_action(hunt_id, "Created hunt");
+}
 
 
 
