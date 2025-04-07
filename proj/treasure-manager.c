@@ -105,6 +105,7 @@ void add_treasure(const char *hunt_id) {
     }
 
     Treasure t = take_treasure();
+    printf("\n");
     write(fd, &t, sizeof(Treasure));
     close(fd);
 
@@ -172,7 +173,7 @@ void view_treasure(const char *hunt_id, int id) {
 int main(int argc, char *argv[]) {
     if (argc < 3) {
         printf("Usage:\n");
-        printf("  --add <hunt_id> [treasure]\n");
+        printf("  --add <hunt_id> [treasure]*\n");
         printf("  --list <hunt_id>\n");
         printf("  --view <hunt_id> <treasure_id>\n");
         return 1;
@@ -184,9 +185,12 @@ int main(int argc, char *argv[]) {
     if (strcmp(cmd, "--add") == 0) {
         add_hunt(hunt_id);
 
-        if (argc == 4 && strcmp(argv[3], "treasure") == 0) {
+        int i=3;
+
+        while (i < argc && strcmp(argv[i], "treasure") == 0) {
             add_treasure(hunt_id);
-        }
+            i++;
+        }        
 
     } else if (strcmp(cmd, "--list") == 0) {
         list_treasures(hunt_id);
