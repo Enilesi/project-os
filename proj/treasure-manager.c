@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <time.h>
+#include <errno.h>
 
 #define TREASURE_PATH_LEN 256
 
@@ -23,12 +24,6 @@ typedef struct {
     char clue[100];
     int value;
 } Treasure;
-
-typedef struct Hunt {
-    char id[100];
-    Treasure *treasures;
-    struct Hunt *next;
-} Hunt;
 
 void log_message(const char *hunt_id, const char *message) {
     char log_path[TREASURE_PATH_LEN];
@@ -176,12 +171,80 @@ void view_treasure(const char *hunt_id, int target_id) {
     printf("Treasure with ID %d not found in hunt '%s'.\n", target_id, hunt_id);
     close(fd);
 }
+
+void remove_treasure(const char *hunt_id, int target_id) {
+    char data_path[TREASURE_PATH_LEN], temp_path[TREASURE_PATH_LEN];
+    snprintf(data_path, sizeof(data_path), "hunt/%s/treasures.dat", hunt_id);
+    snprintf(temp_path, sizeof(temp_path), "hunt/%s/temp.dat", hunt_id);
+
+    int src = open(data_path, O_RDONLY);
+    int dst = open(temp_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+    if (src < 0 || dst < 0) {
+        perror("open");
+        return;
+    }
+
+    Treasure t;
+    int found = 0;
+    while (read(src, &t, sizeof(Treasure)) == sizeof(Treasure)) {
+        if (t.id == target_id) {
+            found = 1;
+            continue;
+        }
+        write(dst, &t, sizeof(Treasure));
+    }
+
+    close(src);
+    close(dst);
+
+    if (found) {
+        unlink(data_path);
+        rename(temp_path, data_path);
+        log_message(hunt_id, "Removed treasure");
+        printf("Treasure ID %d removed from hunt '%s'.\n", target_id, hunt_id);
+    } else {
+        unlink(temp_path);
+        printf("Treasure ID %d not found.\n", target_id);
+    }
+}
+
+void remove_hunt(const char *hunt_id) {
+    char path[TREASURE_PATH_LEN];
+    snprintf(path, sizeof(path), "hunt/%s", hunt_id);
+
+    DIR *dir = opendir(path);
+    if (!dir) {
+        perror("opendir");
+        return;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
+        char file_path[TREASURE_PATH_LEN];
+        snprintf(file_path, sizeof(file_path), "%s/%s", path, entry->d_name);
+        unlink(file_path);
+    }
+    closedir(dir);
+
+    rmdir(path);
+
+    char symlink_path[TREASURE_PATH_LEN];
+    snprintf(symlink_path, sizeof(symlink_path), "log/logged_hunt-%s", hunt_id);
+    unlink(symlink_path);
+
+    log_message(hunt_id, "Removed hunt");
+    printf("Hunt '%s' removed.\n", hunt_id);
+}
+
 void print_menu() {
     printf("\nAvailable commands:\n");
-    printf("  --add [hunt_id]\n");
-    printf("  --add [hunt_id] treasure\n");
+    printf("  --add [hunt_id] [treasure]\n");
     printf("  --list [hunt_id]\n");
     printf("  --view [hunt_id] [treasure_id]\n");
+    printf("  --remove_treasure [hunt_id] [treasure_id]\n");
+    printf("  --remove_hunt [hunt_id]\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -193,19 +256,29 @@ int main(int argc, char *argv[]) {
     const char *command = argv[1];
     const char *hunt_id = argv[2];
 
-
     if (strcmp(command, "--add") == 0) {
         create_hunt(hunt_id);
-        for (int i = 3; i < argc && strcmp(argv[i], "treasure") == 0; ++i) {
-            add_treasure(hunt_id);
+        int i=3;
+        while(i<argc){
+            if(i>3)printf("\n");
+            if (strcmp(argv[i], "treasure") == 0) {
+                add_treasure(hunt_id);
+            }
+            i++;
         }
     } else if (strcmp(command, "--list") == 0) {
         list_treasures(hunt_id);
     } else if (strcmp(command, "--view") == 0 && argc == 4) {
         int treasure_id = atoi(argv[3]);
         view_treasure(hunt_id, treasure_id);
+    } else if (strcmp(command, "--remove_treasure") == 0 && argc == 4) {
+        int treasure_id = atoi(argv[3]);
+        remove_treasure(hunt_id, treasure_id);
+    } else if (strcmp(command, "--remove_hunt") == 0) {
+        remove_hunt(hunt_id);
     } else {
         printf("Invalid or unsupported command.\n");
+        print_menu();
         return 1;
     }
 
