@@ -221,7 +221,6 @@ void remove_hunt(const char *hunt_id) {
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
         char file_path[TREASURE_PATH_LEN];
         snprintf(file_path, sizeof(file_path), "%s/%s", path, entry->d_name);
         unlink(file_path);
@@ -240,7 +239,9 @@ void remove_hunt(const char *hunt_id) {
 
 void print_menu() {
     printf("\nAvailable commands:\n");
-    printf("  --add [hunt_id] [treasure]\n");
+    printf("  --add [hunt_id]\n");
+    printf("  --add [hunt_id] treasure\n");
+    printf("  --add -r [hunt_id] treasure\n");
     printf("  --list [hunt_id]\n");
     printf("  --view [hunt_id] [treasure_id]\n");
     printf("  --remove_treasure [hunt_id] [treasure_id]\n");
@@ -254,17 +255,30 @@ int main(int argc, char *argv[]) {
     }
 
     const char *command = argv[1];
-    const char *hunt_id = argv[2];
+    const char* hunt_id=argv[2];
 
     if (strcmp(command, "--add") == 0) {
+        int repeated_adding = (strcmp(argv[2], "-r") == 0);
+        int treasure_flag_found = 0;
+        int hunt_index = repeated_adding ? 3 : 2;
+    
+        if (hunt_index >= argc) {
+            printf("Missing hunt_id.\n");
+            return 1;
+        }
+    
+        hunt_id = argv[hunt_index];
         create_hunt(hunt_id);
-        int i=3;
-        while(i<argc){
-            if(i>3)printf("\n");
-            if (strcmp(argv[i], "treasure") == 0) {
+    
+        if ((hunt_index + 1) < argc && strcmp(argv[hunt_index + 1], "treasure") == 0) {
+            if (repeated_adding) {
+                while (1) {
+                    printf("\nAdding new treasure (Ctrl+C to stop):\n");
+                    add_treasure(hunt_id);
+                }
+            } else {
                 add_treasure(hunt_id);
             }
-            i++;
         }
     } else if (strcmp(command, "--list") == 0) {
         list_treasures(hunt_id);
