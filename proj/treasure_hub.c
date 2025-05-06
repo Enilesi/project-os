@@ -16,46 +16,49 @@ void sigchld_handler(int sig) {
     while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
         if (pid == monitor_pid) {
             monitor_running = 0;
-            printf("\nMonitor process exited.\n");
+            printf("\n[Hub] Monitor process exited.\n");
         }
     }
     errno = saved_errno;
 }
 
+void send_command_to_monitor(const char *command_line) {
+    int fd = open("cmd.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd >= 0) {
+        dprintf(fd, "%s\n", command_line);
+        close(fd);
+        kill(monitor_pid, SIGUSR1);
+    } else {
+        perror("[Hub] open cmd.txt");
+    }
+}
+
 void start_monitor() {
     if (monitor_running) {
-        printf("Monitor already running.\n");
+        printf("[Hub] Monitor already running.\n");
         return;
     }
 
     monitor_pid = fork();
     if (monitor_pid < 0) {
-        perror("fork");
+        perror("[Hub] fork");
         exit(1);
     } else if (monitor_pid == 0) {
-        printf("[Monitor] Process started with PID %d\n", getpid());
-
-        struct sigaction sa;
-        sa.sa_flags = 0;
-        sigemptyset(&sa.sa_mask);
-
-
-        while (1) {
-            pause(); 
-        }
-        exit(0);
+        execl("./monitor", "./monitor", NULL);
+        perror("[Hub] execl failed");
+        exit(1);
     } else {
         monitor_running = 1;
+        printf("[Hub] Monitor started with PID %d\n", monitor_pid);
     }
 }
 
 void stop_monitor() {
     if (!monitor_running) {
-        printf("No monitor is running.\n");
+        printf("[Hub] No monitor is running.\n");
         return;
     }
-    printf("Sending SIGTERM to monitor (PID %d)...\n", monitor_pid);
-    kill(monitor_pid, SIGTERM);
+    send_command_to_monitor("stop_monitor");
 }
 
 int main() {
@@ -78,25 +81,39 @@ int main() {
         if (!fgets(command, sizeof(command), stdin))
             break;
 
-        command[strcspn(command, "\n")] = '\0'; 
+        command[strcspn(command, "\n")] = '\0';
 
         if (strcmp(command, "start_monitor") == 0) {
+
             start_monitor();
+
         } else if (strcmp(command, "stop_monitor") == 0) {
+
             stop_monitor();
+
         } else if (strcmp(command, "exit") == 0) {
+
             if (monitor_running) {
-                printf("Error: Monitor still running. Use stop_monitor first.\n");
+                printf("[Hub] Error: Monitor still running. Use stop_monitor first.\n");
             } else {
-                printf("Exited\n");
+                printf("[Hub] Exited.\n");
                 break;
             }
-        } else {
+
+        } else if (strncmp(command, "list_hunts", 10) == 0 ||  strncmp(command, "list_treasures", 14) == 0 ||
+                   strncmp(command, "view_treasure", 13) == 0) {
+
             if (!monitor_running) {
-                printf("Error: No monitor process is running.\n");
+                printf("[Hub] Error: Monitor is not running.\n");
+
             } else {
-                printf("Unknown or incomplete command. (implement list_hunts etc later)\n");
+
+                send_command_to_monitor(command);
+
             }
+
+        } else {
+            printf("[Hub] Unknown or unsupported command.\n");
         }
     }
 
