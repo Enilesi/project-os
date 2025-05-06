@@ -10,6 +10,17 @@
 volatile sig_atomic_t monitor_running = 0;
 pid_t monitor_pid = -1;
 
+static void print_menu() {
+    puts("Available commands:");
+    puts("  start_monitor");
+    puts("  list_hunts");
+    puts("  list_treasures <hunt>");
+    puts("  view_treasure <hunt> <id>");
+    puts("  stop_monitor");
+    puts("  help");
+    puts("  exit");
+}
+
 void sigchld_handler(int sig) {
     int saved_errno = errno;
     pid_t pid;
@@ -71,6 +82,8 @@ int main() {
         perror("sigaction");
         exit(1);
     }
+
+    print_menu();
 
     char command[256];
 
