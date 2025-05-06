@@ -16,33 +16,38 @@ void process_command(const char *cmdline) {
 
     if (strcmp(cmdline, "stop_monitor") == 0) {
 
-        printf("[Monitor] Received stop_monitor so exiting.\n");
+        printf("Received stop_monitor so exiting.\n");
         usleep(2000000);
         exit(0);
 
     } else if (strcmp(cmdline, "list_hunts") == 0) {
 
-        printf("[Monitor] List of hunts:\n");
+        printf("List of hunts:\n");
         system("ls -1 hunt 2>/dev/null");
 
     } else if (sscanf(cmdline, "list_treasures %127s", hunt_id) == 1) {
 
-        printf("[Monitor] List of treasures for hunt '%s':\n", hunt_id);
+        printf("List of treasures for hunt '%s':\n", hunt_id);
         char cmd[300];
         snprintf(cmd, sizeof(cmd), "./treasure-manager --list %s", hunt_id);
         system(cmd);
 
     } else if (sscanf(cmdline, "view_treasure %127s %d", hunt_id, &treasure_id) == 2) {
 
-        printf("[Monitor] View treasure %d in hunt '%s':\n", treasure_id, hunt_id);
+        printf("View treasure %d in hunt '%s':\n", treasure_id, hunt_id);
         char cmd[300];
         snprintf(cmd, sizeof(cmd), "./treasure-manager --view %s %d", hunt_id, treasure_id);
         system(cmd);
 
     } else {
-        
-        printf("[Monitor] Unknown command: %s\n", cmdline);
+
+        printf("Unknown command: %s\n", cmdline);
     }
+
+    printf("\nGive new command:\n> ");
+    fflush(stdout);
+
+
 }
 
 int main() {
@@ -51,8 +56,6 @@ int main() {
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sigaction(SIGUSR1, &sa, NULL);
-
-    printf("[Monitor] Started. Waiting for commands...\n");
 
     while (1) {
         pause();
