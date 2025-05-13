@@ -17,7 +17,7 @@ void process_command(const char *cmdline) {
     if (strcmp(cmdline, "stop_monitor") == 0) {
 
         printf("Received stop_monitor so exiting.\n");
-        usleep(2000000);
+        usleep(2000);
         exit(0);
 
     } else if (strcmp(cmdline, "list_hunts") == 0) {
@@ -29,19 +29,20 @@ void process_command(const char *cmdline) {
 
         printf("List of treasures for hunt '%s':\n", hunt_id);
         char cmd[300];
-        snprintf(cmd, sizeof(cmd), "./treasure-manager --list %s", hunt_id);
+        snprintf(cmd, sizeof(cmd), "./treasure_manager --list %s", hunt_id);
         system(cmd);
 
     } else if (sscanf(cmdline, "view_treasure %127s %d", hunt_id, &treasure_id) == 2) {
 
         printf("View treasure %d in hunt '%s':\n", treasure_id, hunt_id);
         char cmd[300];
-        snprintf(cmd, sizeof(cmd), "./treasure-manager --view %s %d", hunt_id, treasure_id);
+        snprintf(cmd, sizeof(cmd), "./treasure_manager --view %s %d", hunt_id, treasure_id);
         system(cmd);
 
     } else {
 
         printf("Unknown command: %s\n", cmdline);
+        
     }
 
     printf("\nGive new command:\n> ");
@@ -62,7 +63,7 @@ int main() {
         if (got_signal) {
             got_signal = 0;
 
-            FILE *f = fopen("cmd.txt", "r");
+            FILE *f = fopen("commands.txt", "r");
             if (f) {
                 char line[256];
                 if (fgets(line, sizeof(line), f)) {

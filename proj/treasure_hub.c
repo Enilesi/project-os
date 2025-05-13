@@ -25,7 +25,6 @@ static void print_menu() {
     puts("  stop_monitor");
     puts("  help");
     puts("  exit");
-    puts("  help");
 }
 
 void sigchld_handler(int sig) {
@@ -43,13 +42,13 @@ void sigchld_handler(int sig) {
 }
 
 void send_command_to_monitor(const char *command_line) {
-    int fd = open("cmd.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    int fd = open("commands.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) {
         dprintf(fd, "%s\n", command_line);
         close(fd);
         kill(monitor_pid, SIGUSR1);
     } else {
-        perror("open cmd.txt");
+        perror("open commands.txt");
     }
 }
 
