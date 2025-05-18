@@ -34,13 +34,13 @@ void print_menu() {
     printf("  \033[1;33m--help\033[0m\n"); 
 }
 
-CommandName parse_command(const char *COMMAND) {
-    if (strcmp(COMMAND, "--add") == 0) return COMMAND_ADD;
-    if (strcmp(COMMAND, "--list") == 0) return COMMAND_LIST;
-    if (strcmp(COMMAND, "--view") == 0) return COMMAND_VIEW;
-    if (strcmp(COMMAND, "--remove_treasure") == 0) return COMMAND_REMOVE_TREASURE;
-    if (strcmp(COMMAND, "--remove_hunt") == 0) return COMMAND_REMOVE_HUNT;
-    if (strcmp(COMMAND, "--help") == 0) return COMMAND_HELP;
+CommandName get_command(const char *command) {
+    if (strcmp(command, "--add") == 0) return COMMAND_ADD;
+    if (strcmp(command, "--list") == 0) return COMMAND_LIST;
+    if (strcmp(command, "--view") == 0) return COMMAND_VIEW;
+    if (strcmp(command, "--remove_treasure") == 0) return COMMAND_REMOVE_TREASURE;
+    if (strcmp(command, "--remove_hunt") == 0) return COMMAND_REMOVE_HUNT;
+    if (strcmp(command, "--help") == 0) return COMMAND_HELP;
     return COMMAND_UNKNOWN;
 }
 
@@ -269,9 +269,9 @@ int main(int argc, char *argv[]) {
     const char *command = argv[1];
     const char *hunt_id = argv[2];
 
-    CommandName COMMAND_type = parse_command(command);
+    CommandName command_name = get_command(command);
 
-    switch (COMMAND_type) {
+    switch (command_name) {
         case COMMAND_ADD: {
                 int repeated_adding = (strcmp(argv[2], "-r") == 0);
                 int hunt_index = repeated_adding ? 3 : 2;
