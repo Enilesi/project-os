@@ -27,7 +27,7 @@ return -1;
 
 int main(int argc, char * argv[]){
    if (argc<2){
-    printf("Arguments error. Hunt id must be provided");
+    printf("Arguments error. Hunt ID must be provided");
    } 
 
    const char* hunt_id=argv[1];
@@ -56,7 +56,7 @@ int main(int argc, char * argv[]){
 
 
    }
-   printf("Hunt %s, users: %d\n",hunt_id,playerLen);
+   printf("Hunt: %s, users: %d\n",hunt_id,playerLen);
 
    for(int i=0;i<playerLen;i++){
     printf("Player: %s,%d\n", players[i].name, players[i].score);

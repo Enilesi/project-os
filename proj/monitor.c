@@ -17,7 +17,7 @@ void process_command(const char *cmdline) {
     if (strcmp(cmdline, "stop_monitor") == 0) {
 
         printf("Received stop_monitor so exiting.\n");
-        usleep(2000);
+        usleep(200000);
         exit(0);
 
     } else if (strcmp(cmdline, "list_hunts") == 0) {

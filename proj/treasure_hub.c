@@ -14,6 +14,28 @@
 
 int pipes[2] = {-1,-1};
 
+
+volatile sig_atomic_t monitor_running = 0;
+pid_t monitor_pid = -1;
+
+void print_prompt() {
+    printf("\nGive new command:\nTH > ");
+    fflush(stdout);
+}
+
+
+static void print_menu() {
+    puts("\nAvailable commands:");
+    puts("  start_monitor");
+    puts("  list_hunts");
+    puts("  list_treasures <hunt>");
+    puts("  view_treasure <hunt> <id>");
+    puts("  stop_monitor");
+    puts("  calculate_score");
+    puts("  \033[1;33mhelp\033[0m"); 
+    puts("  exit");
+}
+
 void clean_output(){
     if(pipes[READ]<0){
         return;
@@ -28,26 +50,7 @@ void clean_output(){
     }
 }
 
-volatile sig_atomic_t monitor_running = 0;
-pid_t monitor_pid = -1;
 
-void print_prompt() {
-    printf("\n> ");
-    fflush(stdout);
-}
-
-
-static void print_menu() {
-    puts("Available commands:");
-    puts("  start_monitor");
-    puts("  list_hunts");
-    puts("  list_treasures <hunt>");
-    puts("  view_treasure <hunt> <id>");
-    puts("  stop_monitor");
-    puts("  calculate_score");
-    puts("  help");
-    puts("  exit");
-}
 
 void stop_monitor_handler(int sig) {
     int saved_errno = errno;
@@ -56,7 +59,7 @@ void stop_monitor_handler(int sig) {
         if (pid == monitor_pid) {
             monitor_running = 0;
             printf("\nMonitor process exited.\n");
-            printf("\nGive new command:\n>");
+            print_prompt();
             fflush(stdout);
         }
     }
@@ -75,6 +78,7 @@ void send_command_to_monitor(const char *command_line) {
     usleep(50000);
     clean_output();
 }
+
 
 void start_monitor() {
 
@@ -115,7 +119,7 @@ void start_monitor() {
         fcntl(pipes[READ],F_SETFL,flags|O_NONBLOCK);
 
         printf("Monitor started with PID %d\n", monitor_pid);
-        printf("\nGive new command:\n>");
+       print_prompt();
 
         clean_output(pipes);
         
@@ -123,6 +127,7 @@ void start_monitor() {
 
     }
 }
+
 
 void stop_monitor() {
     if (!monitor_running) {
@@ -214,7 +219,7 @@ int main() {
 
             if (monitor_running) {
                 printf("Error: Monitor still running. Use stop_monitor first.\n");
-                printf("\nGive new command:\n>");
+                print_prompt();
             } else {
                 printf("Exited.\n");
                 break;
@@ -225,6 +230,7 @@ int main() {
 
             if (!monitor_running) {
                 printf("Error: Monitor is not running.\n");
+                print_prompt();
 
             } else {
 
@@ -234,11 +240,11 @@ int main() {
 
         }else if (strcmp(command, "help") == 0) {
             print_menu();
-            printf("\nGive new command:\n>");
+            print_prompt();
             
         } else if (strcmp(command, "calculate_score") == 0) {
             calculate_scores_for_all_hunts();
-            printf("\nGive new command:\n>");
+            print_prompt();
         }
 
         else {
