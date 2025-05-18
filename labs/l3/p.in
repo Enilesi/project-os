@@ -1,7 +1,0 @@
-maria@yahoo.com;192.168.1.1
-ma@yahoo.com;255.255.255.255
-ma2345@yahoo.com;300.300.300.300
-invalid-email;123.456.78.90
-hello@world.com;
-;192.168.1.1
-no-at-symbol.com;127.0.0.1
