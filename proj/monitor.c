@@ -52,6 +52,9 @@ void process_command(const char *cmdline) {
 }
 
 int main() {
+    setvbuf(stdout, NULL, _IOLBF, 0);
+    setvbuf(stderr, NULL, _IOLBF, 0);
+    printf("In child\n");
     struct sigaction sa;
     sa.sa_handler = handle_signal;
     sigemptyset(&sa.sa_mask);
