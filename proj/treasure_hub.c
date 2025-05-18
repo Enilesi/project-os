@@ -18,8 +18,24 @@ int pipes[2] = {-1,-1};
 volatile sig_atomic_t monitor_running = 0;
 pid_t monitor_pid = -1;
 
+
+typedef enum {
+    COMMAND_START_MONITOR,
+    COMMAND_STOP_MONITOR,
+    COMMAND_EXIT,
+    COMMAND_LIST_HUNTS,
+    COMMAND_LIST_TREASURES,
+    COMMAND_VIEW_TREASURE,
+    COMMAND_HELP,
+    COMMAND_CALCULATE_SCORE,
+    COMMAND_UNKNOWN
+} CommandName;
+
+
 void print_prompt() {
+    usleep(30000);
     printf("\nGive new command:\nTH > ");
+    usleep(20000);
     fflush(stdout);
 }
 
@@ -35,6 +51,20 @@ static void print_menu() {
     puts("  \033[1;33mhelp\033[0m"); 
     puts("  exit");
 }
+
+CommandName get_command(const char* command) {
+    if (strcmp(command, "start_monitor") == 0) return COMMAND_START_MONITOR;
+    if (strcmp(command, "stop_monitor") == 0) return COMMAND_STOP_MONITOR;
+    if (strcmp(command, "exit") == 0) return COMMAND_EXIT;
+    if (strncmp(command, "list_hunts", 10) == 0) return COMMAND_LIST_HUNTS;
+    if (strncmp(command, "list_treasures", 14) == 0) return COMMAND_LIST_TREASURES;
+    if (strncmp(command, "view_treasure", 13) == 0) return COMMAND_VIEW_TREASURE;
+    if (strcmp(command, "help") == 0) return COMMAND_HELP;
+    if (strcmp(command, "calculate_score") == 0) return COMMAND_CALCULATE_SCORE;
+    return COMMAND_UNKNOWN;
+}
+
+
 
 void clean_output(){
     if(pipes[READ]<0){
@@ -197,58 +227,57 @@ int main() {
     char command[256];
     print_prompt();
 
-
     while (1) {
-        
-
-
         if (!fgets(command, sizeof(command), stdin))
             break;
 
         command[strcspn(command, "\n")] = '\0';
+        CommandName command_name = get_command(command);
 
-        if (strcmp(command, "start_monitor") == 0) {
-
-            start_monitor();
-
-        } else if (strcmp(command, "stop_monitor") == 0) {
-
-            stop_monitor();
-
-        } else if (strcmp(command, "exit") == 0) {
-
-            if (monitor_running) {
-                printf("Error: Monitor still running. Use stop_monitor first.\n");
-                print_prompt();
-            } else {
-                printf("Exited.\n");
+        switch (command_name) {
+            case COMMAND_START_MONITOR:
+                start_monitor();
                 break;
-            }
 
-        } else if (strncmp(command, "list_hunts", 10) == 0 ||  strncmp(command, "list_treasures", 14) == 0 ||
-                   strncmp(command, "view_treasure", 13) == 0) {
+            case COMMAND_STOP_MONITOR:
+                stop_monitor();
+                break;
 
-            if (!monitor_running) {
-                printf("Error: Monitor is not running.\n");
+            case COMMAND_EXIT:
+                if (monitor_running) {
+                    printf("Error: Monitor still running. Use stop_monitor first.\n");
+                    print_prompt();
+                } else {
+                    printf("Exited.\n");
+                    return 0;
+                }
+                break;
+
+            case COMMAND_LIST_HUNTS:
+            case COMMAND_LIST_TREASURES:
+            case COMMAND_VIEW_TREASURE:
+                if (!monitor_running) {
+                    printf("Error: Monitor is not running.\n");
+                    print_prompt();
+                } else {
+                    send_command_to_monitor(command);
+                }
+                break;
+
+            case COMMAND_HELP:
+                print_menu();
                 print_prompt();
+                break;
 
-            } else {
+            case COMMAND_CALCULATE_SCORE:
+                calculate_scores_for_all_hunts();
+                print_prompt();
+                break;
 
-                send_command_to_monitor(command);
-
-            }
-
-        }else if (strcmp(command, "help") == 0) {
-            print_menu();
-            print_prompt();
-            
-        } else if (strcmp(command, "calculate_score") == 0) {
-            calculate_scores_for_all_hunts();
-            print_prompt();
-        }
-
-        else {
-            printf("Unknown or unsupported command.\n");
+            default:
+                printf("Unknown or unsupported command.\n");
+                print_prompt();
+                break;
         }
     }
 
