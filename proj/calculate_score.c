@@ -22,10 +22,12 @@ int get_player_id(char *name ){
         }
     }
 return -1;
+
 }
 
 
 int main(int argc, char * argv[]){
+
    if (argc<2){
     printf("Arguments error. Hunt ID must be provided");
    } 
@@ -40,18 +42,23 @@ int main(int argc, char * argv[]){
    if (treasure_file == -1) {
     fprintf(stderr, "Error opening file '%s': %s\n", data_path, strerror(errno));
     return 1;
+    
 }
    Treasure treasure;
 
    while(read(treasure_file,&treasure,sizeof(treasure))>0){
         int playerId= get_player_id(treasure.userName);
         if (playerId == -1) {
+
         playerId = playerLen++;
         players[playerId].score = treasure.value;
         strncpy(players[playerId].name, treasure.userName, 100);
-        }
+        
+    }
         else{
+
             players[playerId].score+=treasure.value;
+        
         }
 
 
@@ -59,8 +66,10 @@ int main(int argc, char * argv[]){
    printf("Hunt: %s, users: %d\n",hunt_id,playerLen);
 
    for(int i=0;i<playerLen;i++){
+    
     printf("Player: %s,%d\n", players[i].name, players[i].score);
-   }
+   
+}
 
 
 }

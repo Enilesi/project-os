@@ -4,13 +4,17 @@
 #include <unistd.h>
 #include <signal.h>
 
+
 volatile sig_atomic_t got_signal = 0;
 
 void handle_signal(int sig) {
+
     got_signal = 1;
+
 }
 
 void process_command(const char *cmdline) {
+
     char command[256], hunt_id[128];
     int treasure_id;
 
@@ -52,6 +56,7 @@ void process_command(const char *cmdline) {
 }
 
 int main() {
+    
     setvbuf(stdout, NULL, _IOLBF, 0);
     setvbuf(stderr, NULL, _IOLBF, 0);
     struct sigaction sa;
@@ -61,8 +66,10 @@ int main() {
     sigaction(SIGUSR1, &sa, NULL);
 
     while (1) {
+
         pause();
         if (got_signal) {
+            
             got_signal = 0;
 
             FILE *f = fopen("commands.txt", "r");
