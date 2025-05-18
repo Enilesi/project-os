@@ -10,20 +10,10 @@
 #include <time.h>
 #include <errno.h>
 
-#define TREASURE_PATH_LEN 256
+#include "treasure.h"
 
-typedef struct {
-    float latitude;
-    float longitude;
-} Gps;
 
-typedef struct {
-    int id;
-    char userName[100];
-    Gps coordinates;
-    char clue[100];
-    int value;
-} Treasure;
+
 
 void log_message(const char *hunt_id, const char *message) {
     char log_path[TREASURE_PATH_LEN];

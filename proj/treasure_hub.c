@@ -7,6 +7,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+
+
 #define READ 0
 #define WRITE 1
 
@@ -42,6 +44,7 @@ static void print_menu() {
     puts("  list_treasures <hunt>");
     puts("  view_treasure <hunt> <id>");
     puts("  stop_monitor");
+    puts("  calculate_score");
     puts("  help");
     puts("  exit");
 }
@@ -129,6 +132,50 @@ void stop_monitor() {
     send_command_to_monitor("stop_monitor");
 }
 
+void calculate_scores_for_all_hunts() {
+    FILE *fp = popen("ls -1 hunt 2>/dev/null", "r");
+    if (!fp) {
+        perror("popen");
+        return;
+    }
+
+    char hunt_id[128];
+    while (fgets(hunt_id, sizeof(hunt_id), fp)) {
+        hunt_id[strcspn(hunt_id, "\n")] = '\0';
+
+        int fd[2];
+        if (pipe(fd) == -1) {
+            perror("pipe");
+            continue;
+        }
+
+        pid_t pid = fork();
+        if (pid == 0) {
+            close(fd[READ]);
+            dup2(fd[WRITE], STDOUT_FILENO);
+            dup2(fd[WRITE], STDERR_FILENO);
+            execl("./p.exe", "./p.exe", hunt_id, NULL);
+            perror("execl");
+            exit(1);
+        } else if (pid > 0) {
+            close(fd[WRITE]);
+            char buf[256];
+            ssize_t n;
+            printf("\n");
+            while ((n = read(fd[READ], buf, sizeof(buf))) > 0) {
+                write(STDOUT_FILENO, buf, n);
+            }
+            close(fd[READ]);
+            waitpid(pid, NULL, 0);
+        } else {
+            perror("fork");
+        }
+    }
+
+    pclose(fp);
+}
+
+
 int main() {
     struct sigaction sa;
     sa.sa_handler = stop_monitor_handler;
@@ -188,7 +235,13 @@ int main() {
         }else if (strcmp(command, "help") == 0) {
             print_menu();
             printf("\nGive new command:\n>");
-        } else {
+            
+        } else if (strcmp(command, "calculate_score") == 0) {
+            calculate_scores_for_all_hunts();
+            printf("\nGive new command:\n>");
+        }
+
+        else {
             printf("Unknown or unsupported command.\n");
         }
     }
