@@ -1,6 +1,3 @@
-To run the project, first, run:
-cd proj
-
 To run treasure_manager.c:
 
 gcc treasure_manager.c -o treasure_manager
@@ -12,6 +9,7 @@ To run treasure_hub.c:
 
 gcc treasure_hub.c -o treasure_hub
 gcc monitor.c -o monitor
+gcc -o p.exe calculate_score.c
 ./treasure_hub
 
 

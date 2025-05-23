@@ -323,6 +323,7 @@ int main(int argc, char *argv[]) {
 
     const char *command = argv[1];
     const char *hunt_id = argv[2];
+    
 
     CommandName command_name = get_command(command);
 
